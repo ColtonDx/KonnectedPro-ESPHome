@@ -1,0 +1,633 @@
+####
+# GENERAL SETTINGS
+# Customize these variables to your preferences and needs
+# more: https://esphome.io/guides/configuration-types.html#substitutions
+substitutions:
+  name: konnected-peo
+  friendly_name: Konnected Alarm Panel
+  project_name: konnected.alarm-panel-pro-esp32-local-keypad
+  project_version: "0.2.2-tb"
+  sensor_debounce_time: 200ms
+  blink_on_state: "true"
+  ####
+  # ALARM CONFIG
+  alarm_code: !secret alarm_master_code
+  disarmed_state: '0'
+  arming_state: '1'
+  armed_away_state: '2'
+  armed_home_state: '3'
+  pending_state: '4'
+  triggered_state: '5'
+
+  ##################
+  # Keypad MAPPING #
+  ##################
+  #Keypad 1
+  keypad1_d0_zone: $zone2
+  keypad1_d1_zone: $zone3
+  keypad1_led_zone: $zone1
+  keypad1_beep_zone: $zone4
+  #Keypad 2
+  #keypad2_d0_zone:
+  #keypad2_d1_zone:
+  #keypad2_led_zone:
+  #keypad2_beep_zone:
+
+  # yamllint disable-line rule:line-length
+  state_strings: '{"disarmed", "arming", "armed_away", "armed_home", "pending", "triggered"}'
+
+  ##################
+  #  ZONE MAPPING  #
+  ##################
+  # Do not edit this section. It's Konnected Pro specific things.
+  zone1: GPIO4
+  zone2: GPIO2
+  zone3: GPIO15
+  zone4: GPIO13
+  zone5: GPIO18
+  zone6: GPIO14
+  zone7: GPIO33
+  zone8: GPIO32
+  zone9: GPIO36
+  zone10: GPIO39
+  zone11: GPIO34
+  zone12: GPIO35
+  alarm1: GPIO12
+  alarm2: GPIO5
+  out1: GPIO23
+  out2: GPIO5
+  status_led: GPIO3
+  # Ethernet Config
+  ethernet_type: LAN8720
+
+packages:
+#  konnected.alarm-panel-pro-ethernet: github://konnected-io/konnected-esphome/alarm-panel-pro-esp32-ethernet.yaml@master
+  remote_package:
+    url: https://github.com/konnected-io/konnected-esphome
+    ref: master
+    refresh: 5min
+    files:
+
+      ####
+      # CORE
+      # This package is required and sets up core features.
+      - packages/core-esp32.yaml
+
+      ####
+      # Ethernet
+      # Enables WiFi connectivity and diagnostics. Uncommet below to enable WiFi.
+      - packages/ethernet.yaml
+
+      ####
+      # STATUS LED
+      # Enables the onboard blue status LED as an activity/error indicator
+      - packages/status-led.yaml
+
+      ####
+      # INPUT ZONES
+#      - packages/alarm-panel/zone1.yaml
+#      - packages/alarm-panel/zone2.yaml
+#      - packages/alarm-panel/zone3.yaml
+#      - packages/alarm-panel/zone4.yaml
+      - packages/alarm-panel/zone5.yaml
+      - packages/alarm-panel/zone6.yaml
+      - packages/alarm-panel/zone7.yaml
+      - packages/alarm-panel/zone8.yaml
+      - packages/alarm-panel/zone9.yaml
+      - packages/alarm-panel/zone10.yaml
+      - packages/alarm-panel/zone11.yaml
+      - packages/alarm-panel/zone12.yaml
+
+      ####
+      # OUTPUTS
+      - packages/alarm-panel/alarm1.yaml
+      - packages/alarm-panel/alarm2.yaml
+
+      ####
+      # WARNING BEEP -> NOT FOR THE ONE BUILT INTO THE KEYPAD
+      # Enables a 'Warning Beep' entity, intended to be used with a piezo buzzer or other pulsing.
+      # binary output This is implemented using the light component with strobe effect to create a
+      # repeated beeping sound or pulsing action that can be turned on via the _strobe_ effect.
+      #- packages/warning-beep.yaml
+
+######### Exposed to HA ##########
+
+#sensor.alarm_state:
+#  - disarmed
+#  - arming
+#  - armed_away
+#  - armed_home
+#  - armed_night
+#  - pending
+#  - triggered
+
+# service.esphome_${name}_arm
+# service.esphome_${name}_arm_away
+
+# service.esphome_${name}_disarm
+#   data:
+#     code: "XXXXXXX"
+
+##################################
+
+switch:
+# This switch is the siren trigger
+  - platform: template
+    name: ${friendly_name} Trigger Siren
+    id: trigger_siren
+    icon: mdi:bullhorn
+    optimistic: true
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_OFF
+
+button:
+  - platform: template
+    name: "Arm Away"
+    id: arm_away_button
+    on_press:
+      - state_machine.transition: arm_away
+
+  - platform: template
+    name: "Arm Home"
+    id: arm_home_button
+    on_press:
+      - state_machine.transition: arm_home
+
+  - platform: template
+    name: "Disarm"
+    id: disarm_button
+    on_press:
+      - state_machine.transition: disarm
+
+output:
+  - platform: gpio
+    pin: $keypad_led_zone
+    id: keypad_led
+    inverted: true   # active-low, grounding turns LED green
+
+  - platform: gpio
+    pin: $keypad_beep_zone
+    id: keypad1_beep
+    inverted: true   # active-low, grounding triggers beep
+
+
+##################
+# Binary Sensors #
+##################
+binary_sensor:
+# This is where zones are Mapped to binary sensors like doors/windows. They cannot overlap with other assignments like Keypads, LEDs, Beepers.
+
+#  - id: !extend zone1
+#    name: Zone 01 ASSIGNED TO KEYPAD LED
+#    device_class: door
+#    on_state:
+#      then:
+#        - script.execute: evaluate_alarm
+
+ # - id: !extend zone2
+ #   name: Zone 02 ASSIGNED TO KEYPAD BEEP
+ #   device_class: door
+ #   on_state:
+ #     then:
+ #       - script.execute: evaluate_alarm
+
+  # - id: !extend zone3
+ #   name: Zone 03 ASSIGNED TO KEYPAD BEEP
+ #   device_class: door
+ #   on_state:
+ #     then:
+ #       - script.execute: evaluate_alarm
+
+ # - id: !extend zone4
+ #   name: Zone 04ASSIGNED TO KEYPAD BEEP
+ #   device_class: door
+ #   on_state:
+ #     then:
+ #       - script.execute: evaluate_alarm
+
+  - id: !extend zone5
+    name: Zone 05
+    device_class: door
+    on_state:
+      then:
+        - script.execute: evaluate_alarm
+
+  - id: !extend zone6
+    name: Zone 06
+    device_class: door
+    on_state:
+      then:
+        - script.execute: evaluate_alarm
+
+  - id: !extend zone7
+    name: Zone 07
+    device_class: door
+    on_state:
+      then:
+        - script.execute: evaluate_alarm
+
+  - id: !extend zone8
+    name: Zone 08
+    device_class: door
+    on_state:
+      then:
+        - script.execute: evaluate_alarm
+
+  - id: !extend zone9
+    name: Zone 09
+    device_class: door
+    on_state:
+      then:
+        - script.execute: evaluate_alarm
+
+  - id: !extend zone10
+    name: Zone 10
+    device_class: door
+    on_state:
+      then:
+        - script.execute: evaluate_alarm
+
+  - id: !extend zone11
+    name: Zone 11
+    device_class: door
+    on_state:
+      then:
+        - script.execute: evaluate_alarm
+
+  - id: !extend zone12
+    name: Zone 12
+    device_class: door
+    on_state:
+      then:
+        - script.execute: evaluate_alarm
+
+####
+# STATE MACHINE
+# The logic of armed and disarmed states and transitions is defined here
+external_components:
+  source: github://muxa/esphome-state-machine
+  components:
+    - state_machine
+
+ ##################
+ # STATE MACHINES #
+ ##################
+state_machine:
+  id: alarm_states
+  diagram: mermaid
+  initial_state: 'disarmed'
+  states:
+    - name: 'disarmed'
+      on_enter:
+        - script.execute: update_keypad
+        - text_sensor.template.publish:
+            id: alarm_state_text
+            state: "disarmed"
+
+    - name: 'arming'
+      on_enter:
+        - script.execute: flash_keypad_led
+        - script.execute: beeper_countdown
+        - text_sensor.template.publish:
+            id: alarm_state_text
+            state: "arming"
+        - delay: !lambda |-
+            return (uint32_t) (id(arming_timeout).state * 1000);
+        - state_machine.transition: arm_away
+      on_leave:
+        - script.stop: flash_keypad_led
+        - script.stop: beeper_countdown
+
+    - name: 'armed_away'
+      on_enter:
+        - script.execute: update_keypad
+        - text_sensor.template.publish:
+            id: alarm_state_text
+            state: "armed_away"
+
+    - name: 'armed_home'
+      on_enter:
+        - script.execute: update_keypad
+        - text_sensor.template.publish:
+            id: alarm_state_text
+            state: "armed_home"
+
+    - name: 'pending'
+      on_enter:
+        - script.execute: update_keypad
+        - text_sensor.template.publish:
+            id: alarm_state_text
+            state: "pending"
+        - delay: !lambda |-
+            return (uint32_t) (id(pending_timeout).state * 1000);
+        - state_machine.transition: trigger
+
+    - name: 'triggered'
+      on_enter:
+        - script.execute: flash_keypad_led
+        - script.execute: beeper_countdown
+        - text_sensor.template.publish:
+            id: alarm_state_text
+            state: "triggered"
+        - if:
+            condition:
+              switch.is_on: trigger_siren
+            then:
+              - switch.turn_on: alarm1
+        - delay: !lambda |-
+            return (uint32_t) (id(trigger_timeout).state * 60 * 1000);
+        - state_machine.transition: arm_away
+      on_leave:
+        - switch.turn_off: alarm1
+
+
+  inputs:
+    - name: arm_away
+      transitions:
+        - disarmed -> arming
+        - arming -> armed_away
+        - triggered -> armed_away
+
+    - name: arm_home
+      transitions:
+        - disarmed -> armed_home
+
+    - name: disarm
+      transitions:
+        - arming -> disarmed
+        - armed_away -> disarmed
+        - armed_home -> disarmed
+        - pending -> disarmed
+        - triggered -> disarmed
+
+    - name: toggle
+      transitions:
+        - arming -> disarmed
+        - armed_away -> disarmed
+        - armed_home -> disarmed
+        - pending -> disarmed
+        - triggered -> disarmed
+        - disarmed -> arming
+
+    - name: trip
+      transitions:
+        - armed_away -> pending
+        - armed_home -> pending
+
+    - name: trigger
+      transitions:
+        - armed_away -> triggered
+        - armed_home -> triggered
+        - pending -> triggered
+
+##################
+#    SCRIPTS     #
+##################
+
+script:
+  - id: evaluate_alarm
+    then:
+      - if:
+          condition:
+            and:
+              - or:
+                  - state_machine.state: armed_away
+                  - state_machine.state: armed_home
+              - or:
+                  - lambda: return id(zone5).state;
+                  - lambda: return id(zone6).state;
+                  - lambda: return id(zone7).state;
+                  - lambda: return id(zone8).state;
+                  - lambda: return id(zone9).state;
+                  - lambda: return id(zone10).state;
+                  - lambda: return id(zone11).state;
+                  - lambda: return id(zone12).state;
+          then:
+            - state_machine.transition: trip
+
+  - id: update_keypad
+    then:
+      - if:
+          condition:
+            or:
+              - state_machine.state: disarmed
+              - state_machine.state: triggered
+          then:
+            - script.stop: flash_keypad_led
+            - output.turn_off: keypad_led
+            - output.turn_on: keypad_led
+          else:
+            - if:
+                condition:
+                  or:
+                    - state_machine.state: arming
+                    - state_machine.state: pending
+                then:
+                  - script.execute: flash_keypad_led
+                  - script.execute: beeper_countdown
+                else:
+                  - script.stop: flash_keypad_led
+                  - script.stop: beeper_countdown
+                  - output.turn_off: keypad_beep
+                  - output.turn_off: keypad_led
+
+  - id: flash_keypad_led
+    mode: restart
+    then:
+      - output.turn_on: keypad_led
+      - delay: 250ms
+      - output.turn_off: keypad_led
+      - delay: 250ms
+      - script.execute: flash_keypad_led
+
+  - id: beeper_countdown
+    mode: restart
+    then:
+      - output.turn_on: keypad_beep
+      - delay: 200ms
+      - output.turn_off: keypad_beep
+      - delay: 750ms
+      - script.execute: beeper_countdown
+
+globals:
+  - id: alarm_state_global
+    type: 'uint8_t'
+    restore_value: true
+    initial_value: '0'
+  - id: incorrect_codes
+    type: 'uint8_t'
+    restore_value: true
+    initial_value: '0'
+
+
+sensor:
+  - platform: template
+    id: alarm_state
+    update_interval: 1s
+    lambda: return id(alarm_state_global);
+    filters:
+      - delta: 1
+    on_value:
+      - text_sensor.template.publish:
+          id: alarm_state_text
+          state: !lambda |-
+            static std::array<std::string, 7> strings = ${state_strings};
+            int y = (int) x;
+            return strings[y];
+
+  - platform: template
+    id: incorrect_codes_sensor
+    name: '${friendly_name} Incorrect Codes'
+    lambda: return id(incorrect_codes);
+    update_interval: never
+
+
+text_sensor:
+  - platform: state_machine
+    id: alarm_state_text
+    name: ${friendly_name} Alarm State
+
+  - platform: template
+    id: ready_state
+    name: ${friendly_name} Ready
+    disabled_by_default: true
+
+number:
+  - platform: template
+    id: arming_timeout
+    name: ${friendly_name} Arming Timeout
+    restore_value: true
+    initial_value: 10
+    unit_of_measurement: seconds
+    min_value: 0
+    max_value: 300
+    step: 1
+    mode: box
+    optimistic: true
+    entity_category: config
+
+  - platform: template
+    id: pending_timeout
+    name: ${friendly_name} Pending Timeout
+    restore_value: true
+    initial_value: 60
+    unit_of_measurement: seconds
+    min_value: 0
+    max_value: 300
+    step: 1
+    mode: box
+    optimistic: true
+    entity_category: config
+
+  - platform: template
+    id: trigger_timeout
+    name: ${friendly_name} Trigger Timeout
+    restore_value: true
+    initial_value: 5
+    unit_of_measurement: minutes
+    min_value: 1
+    max_value: 20
+    step: 1
+    mode: box
+    optimistic: true
+    entity_category: config
+
+
+####
+# WEB SEVER
+# Enables the built-in web server for viewing the device state, internals and controls via web browser
+# on the same local network as the device.
+web_server:
+  include_internal: true
+
+####
+# LOGGER
+# more: https://esphome.io/components/logger.html
+logger:
+
+
+wiegand:
+  - id: Keypad
+    d0: $keypad1_d0_zone
+    d1: $keypad1_d1_zone
+    on_key:
+      - lambda: |-
+          ESP_LOGI("KEY", "received key %d", x);
+          if (x == 11) {
+            // optional: clear any partial PIN entry
+            id(pincode_reader).clear();
+            // optional: reset incorrect code counter
+            id(incorrect_codes) = 0;
+            // trigger the arming away transition
+            id(alarm_states).transition("arm_away");
+          }
+    on_tag:
+      - lambda: ESP_LOGI("TAG", "received tag %s", x.c_str());
+    on_raw:
+      - lambda: ESP_LOGI("RAW", "received raw %d bits, value %llx", bits, value);
+
+key_collector:
+  - id: pincode_reader
+    source_id: Keypad
+    min_length: 4
+    max_length: 4
+    end_keys: "*"
+    end_key_required: false
+    clear_keys: "*"
+    allowed_keys: "0123456789"
+    timeout: 5s
+    on_progress:
+      - logger.log:
+          format: "input progress: '%s', started by '%c'"
+          args: [ 'x.c_str()', "(start == 0 ? '~' : start)" ]
+    on_result:
+      - logger.log:
+          format: "input result: '%s', started by '%c', ended by '%c'"
+          args: [ 'x.c_str()', "(start == 0 ? '~' : start)", "(end == 0 ? '~' : end)" ]
+      - if:
+          condition:
+            lambda: return strcmp(x.c_str(), "${alarm_code}") == 0;
+          then:
+            - lambda: id(incorrect_codes) = 0;
+            - state_machine.transition: disarm
+          else:
+            - lambda: id(incorrect_codes) += 1;
+            - if:
+                condition:
+                  lambda: return id(incorrect_codes) >= 3;
+                then:
+                  - state_machine.transition: trigger
+
+
+    on_timeout:
+      - logger.log:
+          format: "input timeout: '%s', started by '%c'"
+          args: [ 'x.c_str()', "(start == 0 ? '~' : start)" ]
+
+
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+  on_boot:
+    priority: -100
+    then:
+      - script.execute: update_keypad
+
+api:
+  encryption:
+    key: 
+
+  services:
+    - service: arm
+      then:
+        - state_machine.transition: arm
+    - service: disarm
+      variables:
+        code: string
+      then:
+        - if:
+            condition:
+              lambda: return code == "${alarm_code}";
+            then:
+              - state_machine.transition: disarm
