@@ -23,16 +23,11 @@ substitutions:
   # Keypad MAPPING #
   ##################
   #Keypad 1
-  keypad1_d0_zone: $zone2
-  keypad1_d1_zone: $zone3
-  keypad1_led_zone: $zone1
-  keypad1_beep_zone: $zone4
-  #Keypad 2
-  #keypad2_d0_zone:
-  #keypad2_d1_zone:
-  #keypad2_led_zone:
-  #keypad2_beep_zone:
-
+  keypad_d0_zone: $zone2
+  keypad_d1_zone: $zone3
+  keypad_led_zone: $zone1
+  keypad_beep_zone: $zone4
+  
   # yamllint disable-line rule:line-length
   state_strings: '{"disarmed", "arming", "armed_away", "armed_home", "pending", "triggered"}'
 
@@ -167,7 +162,7 @@ output:
 
   - platform: gpio
     pin: $keypad_beep_zone
-    id: keypad1_beep
+    id: keypad_beep
     inverted: true   # active-low, grounding triggers beep
 
 
@@ -548,8 +543,8 @@ logger:
 
 wiegand:
   - id: Keypad
-    d0: $keypad1_d0_zone
-    d1: $keypad1_d1_zone
+    d0: $keypad_d0_zone
+    d1: $keypad_d1_zone
     on_key:
       - lambda: |-
           ESP_LOGI("KEY", "received key %d", x);
