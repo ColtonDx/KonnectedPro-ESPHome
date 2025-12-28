@@ -3,7 +3,7 @@
 # Customize these variables to your preferences and needs
 # more: https://esphome.io/guides/configuration-types.html#substitutions
 substitutions:
-  name: konnected-peo
+  name: konnected-poe
   friendly_name: Konnected Alarm Panel
   project_name: konnected.alarm-panel-pro-esp32-local-keypad
   project_version: "0.2.2-tb"
@@ -18,6 +18,18 @@ substitutions:
   armed_home_state: '3'
   pending_state: '4'
   triggered_state: '5'
+
+  ##################
+  # Zone Names     #
+  ##################
+  zone5_name: "Zone 05"
+  zone6_name: "Zone 06"
+  zone7_name: "Zone 07"
+  zone8_name: "Zone 08"
+  zone9_name: "Zone 09"
+  zone10_name: "Zone 10"
+  zone11_name: "Zone 11"
+  zone12_name: "Zone 12"
 
   ##################
   # Keypad MAPPING #
@@ -201,56 +213,56 @@ binary_sensor:
  #       - script.execute: evaluate_alarm
 
   - id: !extend zone5
-    name: Zone 05
+    name: ${zone5_name}
     device_class: door
     on_state:
       then:
         - script.execute: evaluate_alarm
 
   - id: !extend zone6
-    name: Zone 06
+    name: ${zone6_name}
     device_class: door
     on_state:
       then:
         - script.execute: evaluate_alarm
 
   - id: !extend zone7
-    name: Zone 07
+    name: ${zone7_name}
     device_class: door
     on_state:
       then:
         - script.execute: evaluate_alarm
 
   - id: !extend zone8
-    name: Zone 08
+    name: ${zone8_name}
     device_class: door
     on_state:
       then:
         - script.execute: evaluate_alarm
 
   - id: !extend zone9
-    name: Zone 09
+    name: ${zone9_name}
     device_class: door
     on_state:
       then:
         - script.execute: evaluate_alarm
 
   - id: !extend zone10
-    name: Zone 10
+    name: ${zone10_name}
     device_class: door
     on_state:
       then:
         - script.execute: evaluate_alarm
 
   - id: !extend zone11
-    name: Zone 11
+    name: ${zone11_name}
     device_class: door
     on_state:
       then:
         - script.execute: evaluate_alarm
 
   - id: !extend zone12
-    name: Zone 12
+    name: ${zone12_name}
     device_class: door
     on_state:
       then:
@@ -579,19 +591,43 @@ key_collector:
       - logger.log:
           format: "input result: '%s', started by '%c', ended by '%c'"
           args: [ 'x.c_str()', "(start == 0 ? '~' : start)", "(end == 0 ? '~' : end)" ]
-      - if:
-          condition:
-            lambda: return strcmp(x.c_str(), "${alarm_code}") == 0;
-          then:
-            - lambda: id(incorrect_codes) = 0;
-            - state_machine.transition: disarm
-          else:
-            - lambda: id(incorrect_codes) += 1;
-            - if:
-                condition:
-                  lambda: return id(incorrect_codes) >= 3;
-                then:
-                  - state_machine.transition: trigger
+      - lambda: |-
+          std::string codes_str = "${alarm_code}";
+          std::string code_param = x.c_str();
+          size_t code_start = 0;
+          size_t code_end = 0;
+          bool code_matched = false;
+          
+          while ((code_end = codes_str.find(',', code_start)) != std::string::npos) {
+            std::string single_code = codes_str.substr(code_start, code_end - code_start);
+            single_code.erase(0, single_code.find_first_not_of(" \t"));
+            single_code.erase(single_code.find_last_not_of(" \t") + 1);
+            
+            if (single_code == code_param) {
+              code_matched = true;
+              break;
+            }
+            code_start = code_end + 1;
+          }
+          
+          if (!code_matched) {
+            std::string last_code = codes_str.substr(code_start);
+            last_code.erase(0, last_code.find_first_not_of(" \t"));
+            last_code.erase(last_code.find_last_not_of(" \t") + 1);
+            if (last_code == code_param) {
+              code_matched = true;
+            }
+          }
+          
+          if (code_matched) {
+            id(incorrect_codes) = 0;
+            id(alarm_states).transition("disarm");
+          } else {
+            id(incorrect_codes) += 1;
+            if (id(incorrect_codes) >= 3) {
+              id(alarm_states).transition("trigger");
+            }
+          }
 
 
     on_timeout:
@@ -611,7 +647,7 @@ esphome:
 
 api:
   encryption:
-    key: 
+    key:
 
   services:
     - service: arm
@@ -621,8 +657,42 @@ api:
       variables:
         code: string
       then:
-        - if:
-            condition:
-              lambda: return code == "${alarm_code}";
-            then:
-              - state_machine.transition: disarm
+        - lambda: |-
+            std::string codes_str = "${alarm_code}";
+            std::string code_param = code;
+            size_t code_start = 0;
+            size_t code_end = 0;
+            bool code_matched = false;
+            
+            while ((code_end = codes_str.find(',', code_start)) != std::string::npos) {
+              std::string single_code = codes_str.substr(code_start, code_end - code_start);
+              single_code.erase(0, single_code.find_first_not_of(" \t"));
+              single_code.erase(single_code.find_last_not_of(" \t") + 1);
+              
+              if (single_code == code_param) {
+                code_matched = true;
+                break;
+              }
+              code_start = code_end + 1;
+            }
+            
+            if (!code_matched) {
+              std::string last_code = codes_str.substr(code_start);
+              last_code.erase(0, last_code.find_first_not_of(" \t"));
+              last_code.erase(last_code.find_last_not_of(" \t") + 1);
+              if (last_code == code_param) {
+                code_matched = true;
+              }
+            }
+            
+            if (code_matched) {
+              id(alarm_states).transition("disarm");
+            }
+
+# Static IP Settings
+
+#ethernet:
+#  manual_ip:
+#    static_ip: 10.10.102.12
+#    gateway: 10.10.102.1
+#    subnet: 255.255.255.0
