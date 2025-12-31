@@ -1,6 +1,6 @@
 # Konnected Pro Ethernet Alarm Panel Configuration
 
-This ESPHome configuration implements a local alarm system for the Konnected Pro Alarm Panel ESP32 with Ethernet connectivity.
+This ESPHome configuration implements a local alarm system for the Konnected Pro Alarm Panel Pro (Ethernet) using Esphome. This config includes support for a Wiegand Hardwired Keypad to Arm/Disarm
 
 ## Overview
 
