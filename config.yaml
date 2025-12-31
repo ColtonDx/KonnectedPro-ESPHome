@@ -560,7 +560,14 @@ wiegand:
     on_key:
       - lambda: |-
           ESP_LOGI("KEY", "received key %d", x);
-          if (x == 11) {
+          if (x == 10) {
+            // optional: clear any partial PIN entry
+            id(pincode_reader).clear();
+            // optional: reset incorrect code counter
+            id(incorrect_codes) = 0;
+            // trigger the arming home transition
+            id(alarm_states).transition("arm_home");
+          } else if (x == 12) {
             // optional: clear any partial PIN entry
             id(pincode_reader).clear();
             // optional: reset incorrect code counter
